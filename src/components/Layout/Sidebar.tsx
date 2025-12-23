@@ -22,7 +22,7 @@ const menuItems = [
   { href: '/real-time-monitoring', label: 'Real-Time Monitoring', icon: FiMonitor },
   { href: '/bay-status', label: 'Bay Status', icon: FiGrid },
   { href: '/reports', label: 'Reports', icon: FiBarChart2 },
-  { href: '/customer-communication', label: 'Customer Communication', icon: FiMessageSquare },
+  // { href: '/customer-communication', label: 'Customer Communication', icon: FiMessageSquare },
   { href: '/vehicle-assessment', label: '360° Vehicle Assessment', icon: FiCamera },
   { href: '/administration', label: 'Administration', icon: FiSettings },
 ]

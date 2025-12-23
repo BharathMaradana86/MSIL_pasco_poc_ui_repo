@@ -17,7 +17,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/real-time-monitoring" element={<RealTimeMonitoring />} />
         <Route path="/reports" element={<Reports />} />
-        <Route path="/customer-communication" element={<CustomerCommunication />} />
+        {/* <Route path="/customer-communication" element={<CustomerCommunication />} /> */}
         <Route path="/vehicle-assessment" element={<VehicleAssessment />} />
         <Route path="/administration" element={<Administration />} />
         <Route path="/bay-status" element={<BayStatus />} />

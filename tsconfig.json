@@ -28,7 +28,6 @@
     "alwaysStrict": false,
     "noImplicitReturns": false,
     "noUncheckedIndexedAccess": false,
-    "suppressImplicitAnyIndexErrors": true,
 
     /* Path aliases */
     "baseUrl": ".",

@@ -1,6 +1,6 @@
 // API integration structure for MSIL Automated Workshop System
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api'
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:3001/api'
 
 export interface ApiResponse<T> {
   success: boolean

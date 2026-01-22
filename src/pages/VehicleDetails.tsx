@@ -67,7 +67,7 @@ export default function VehicleDetails() {
       stage: 'Main Entry',
       direction: 'In',
       timestamp: new Date(Date.now() - 120 * 60000),
-      images: [],
+      images: ['image1.jpg', 'image2.jpg'],
       location: 'Main Gate',
     },
     {
@@ -75,7 +75,7 @@ export default function VehicleDetails() {
       stage: 'Washing Entry',
       direction: 'In',
       timestamp: new Date(Date.now() - 110 * 60000),
-      images: [],
+      images: ['image3.jpg'],
       location: 'Washing Bay',
     },
     {
@@ -83,7 +83,7 @@ export default function VehicleDetails() {
       stage: 'Washing Exit',
       direction: 'Out',
       timestamp: new Date(Date.now() - 95 * 60000),
-      images: [],
+      images: ['image4.jpg', 'image5.jpg'],
       location: 'Washing Bay',
     },
     {
@@ -91,7 +91,7 @@ export default function VehicleDetails() {
       stage: 'Floor Entry',
       direction: 'In',
       timestamp: new Date(Date.now() - 90 * 60000),
-      images: [],
+      images: ['image6.jpg'],
       location: 'Service Floor',
     },
     {
@@ -99,7 +99,7 @@ export default function VehicleDetails() {
       stage: 'Bay Allocation',
       direction: 'In',
       timestamp: new Date(Date.now() - 85 * 60000),
-      images: [],
+      images: ['image7.jpg', 'image8.jpg', 'image9.jpg'],
       location: 'Bay 2',
     },
   ]
@@ -247,69 +247,63 @@ export default function VehicleDetails() {
       <div>
         {/* Vehicle Tracking Tab */}
         {activeTab === 'tracking' && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Tracking Stages</h2>
-              <div className="space-y-4">
-                {trackingStages.map((stage, index) => (
-                  <div key={stage.id} className="flex items-start space-x-4">
-                    <div className="flex flex-col items-center">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        stage.direction === 'In' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'
-                      }`}>
-                        {stage.direction === 'In' ? '✓' : '→'}
-                      </div>
-                      {index < trackingStages.length - 1 && (
-                        <div className="w-0.5 h-12 bg-gray-200 mt-2"></div>
-                      )}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Tracking Stages</h2>
+            <div className="space-y-4">
+              {trackingStages.map((stage, index) => (
+                <div key={stage.id} className="flex items-start space-x-4">
+                  <div className="flex flex-col items-center">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      stage.direction === 'In' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'
+                    }`}>
+                      {stage.direction === 'In' ? '✓' : '→'}
                     </div>
-                    <div className="flex-1 pb-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium text-gray-900">{stage.stage}</h3>
-                          <p className="text-sm text-gray-600">{stage.location}</p>
+                    {index < trackingStages.length - 1 && (
+                      <div className="w-0.5 h-12 bg-gray-200 mt-2"></div>
+                    )}
+                  </div>
+                  <div className="flex-1 pb-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <h3 className="font-medium text-gray-900">{stage.stage}</h3>
+                            <p className="text-sm text-gray-600">{stage.location}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium text-gray-900">
+                              {format(stage.timestamp, 'dd-MM-yyyy HH:mm:ss')}
+                            </p>
+                            <span className={`text-xs px-2 py-1 rounded ${
+                              stage.direction === 'In' 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'bg-blue-100 text-blue-700'
+                            }`}>
+                              {stage.direction}
+                            </span>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium text-gray-900">
-                            {format(stage.timestamp, 'dd-MM-yyyy HH:mm:ss')}
-                          </p>
-                          <span className={`text-xs px-2 py-1 rounded ${
-                            stage.direction === 'In' 
-                              ? 'bg-green-100 text-green-700' 
-                              : 'bg-blue-100 text-blue-700'
-                          }`}>
-                            {stage.direction}
-                          </span>
-                        </div>
+                        {stage.images.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {stage.images.map((img, idx) => (
+                              <div 
+                                key={idx} 
+                                className="relative w-24 h-24 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden hover:border-primary-300 cursor-pointer group"
+                              >
+                                <FiCamera className="w-6 h-6 text-gray-400 group-hover:text-primary-600" />
+                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity"></div>
+                                <span className="absolute bottom-1 left-1 right-1 text-[8px] text-gray-500 bg-white bg-opacity-80 px-1 py-0.5 rounded truncate">
+                                  {img}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      {stage.images.length > 0 && (
-                        <div className="mt-2 flex space-x-2">
-                          {stage.images.map((img, idx) => (
-                            <div key={idx} className="w-20 h-20 bg-gray-100 rounded border border-gray-200 flex items-center justify-center">
-                              <FiCamera className="w-6 h-6 text-gray-400" />
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Tracking Images Gallery */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Captured Images</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {trackingStages.map((stage) => (
-                  <div key={stage.id} className="space-y-2">
-                    <div className="aspect-video bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
-                      <FiCamera className="w-8 h-8 text-gray-400" />
-                    </div>
-                    <p className="text-xs text-center text-gray-600">{stage.stage}</p>
-                  </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

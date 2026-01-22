@@ -8,6 +8,7 @@ import VehicleAssessment from './pages/VehicleAssessment'
 import Administration from './pages/Administration'
 import BayStatus from './pages/BayStatus'
 import VehicleDetails from './pages/VehicleDetails'
+import ReceptionDashboard from './pages/ReceptionDashboard'
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/reception" element={<ReceptionDashboard />} />
         <Route path="/real-time-monitoring" element={<RealTimeMonitoring />} />
         <Route path="/reports" element={<Reports />} />
         {/* <Route path="/customer-communication" element={<CustomerCommunication />} /> */}

@@ -9,6 +9,7 @@ import {
   FiCamera,
   FiX,
   FiGrid,
+  FiUser,
 } from 'react-icons/fi'
 import clsx from 'clsx'
 
@@ -19,6 +20,7 @@ interface SidebarProps {
 
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: FiHome },
+  { href: '/reception', label: 'Reception Dashboard', icon: FiUser },
   { href: '/real-time-monitoring', label: 'Real-Time Monitoring', icon: FiMonitor },
   { href: '/bay-status', label: 'Bay Status', icon: FiGrid },
   { href: '/reports', label: 'Reports', icon: FiBarChart2 },

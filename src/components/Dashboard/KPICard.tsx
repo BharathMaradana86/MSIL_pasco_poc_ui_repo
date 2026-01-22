@@ -6,7 +6,7 @@ interface KPICardProps {
   value: number
   icon: IconType
   trend: string
-  color: 'blue' | 'green' | 'orange' | 'red'
+  color: 'blue' | 'green' | 'orange' | 'red' | 'purple' | 'indigo' | 'yellow'
 }
 
 const colorClasses = {
@@ -14,6 +14,9 @@ const colorClasses = {
   green: 'bg-green-50 text-green-600',
   orange: 'bg-orange-50 text-orange-600',
   red: 'bg-red-50 text-red-600',
+  purple: 'bg-purple-50 text-purple-600',
+  indigo: 'bg-indigo-50 text-indigo-600',
+  yellow: 'bg-yellow-50 text-yellow-600',
 }
 
 export default function KPICard({ title, value, icon: Icon, trend, color }: KPICardProps) {
@@ -30,22 +33,24 @@ export default function KPICard({ title, value, icon: Icon, trend, color }: KPIC
           <Icon className="w-5 h-5" />
         </div>
       </div>
-      <div className="mt-3 flex items-center">
-        {trend !== 'Critical' ? (
-          <>
-            {isPositive ? (
-              <FiTrendingUp className="w-3 h-3 text-green-500 mr-1" />
-            ) : (
-              <FiTrendingDown className="w-3 h-3 text-red-500 mr-1" />
-            )}
-            <span className={`text-xs ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-              {trend} from yesterday
-            </span>
-          </>
-        ) : (
-          <span className="text-xs text-red-600 font-medium">{trend}</span>
-        )}
-      </div>
+      {trend && (
+        <div className="mt-3 flex items-center">
+          {trend !== 'Critical' ? (
+            <>
+              {isPositive ? (
+                <FiTrendingUp className="w-3 h-3 text-green-500 mr-1" />
+              ) : (
+                <FiTrendingDown className="w-3 h-3 text-red-500 mr-1" />
+              )}
+              <span className={`text-xs ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                {trend} from yesterday
+              </span>
+            </>
+          ) : (
+            <span className="text-xs text-red-600 font-medium">{trend}</span>
+          )}
+        </div>
+      )}
     </div>
   )
 }

@@ -1,27 +1,30 @@
 import { useEffect, useState } from 'react'
-import { FiTruck, FiClock, FiAlertCircle, FiCheckCircle } from 'react-icons/fi'
-import VehicleStatusCard from '../components/Dashboard/VehicleStatusCard'
+import { FiFileText, FiDroplet, FiTool, FiNavigation, FiCheckCircle, FiDollarSign, FiTruck } from 'react-icons/fi'
 import KPICard from '../components/Dashboard/KPICard'
-import LiveAlerts from '../components/Dashboard/LiveAlerts'
 import VehicleTicker from '../components/Dashboard/VehicleTicker'
-import RecentActivity from '../components/Dashboard/RecentActivity'
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
-    totalVehicles: 0,
-    inWorkshop: 0,
-    completed: 0,
-    pending: 0,
+    gateInButJcNotOpen: 0,
+    washing: 0,
+    shopFloor: 0,
+    roadTest: 0,
+    jcClosedButNotBilled: 0,
+    billedButNotDelivered: 0,
+    delivered: 0,
   })
 
   useEffect(() => {
     // Simulate real-time data updates
     const interval = setInterval(() => {
       setStats({
-        totalVehicles: 45,
-        inWorkshop: 23,
-        completed: 12,
-        pending: 10,
+        gateInButJcNotOpen: 5,
+        washing: 8,
+        shopFloor: 12,
+        roadTest: 3,
+        jcClosedButNotBilled: 4,
+        billedButNotDelivered: 6,
+        delivered: 15,
       })
     }, 1000)
 
@@ -39,52 +42,58 @@ export default function Dashboard() {
       {/* KPI Cards - Single Row */}
       <div className="flex flex-wrap gap-4">
         <KPICard
-          title="Total Vehicles Today"
-          value={stats.totalVehicles}
-          icon={FiTruck}
-          trend="+12%"
-          color="blue"
-        />
-        <KPICard
-          title="In Workshop"
-          value={stats.inWorkshop}
-          icon={FiClock}
-          trend="+5"
+          title="Gate In but JC not opened"
+          value={stats.gateInButJcNotOpen}
+          icon={FiFileText}
+          trend=""
           color="orange"
         />
         <KPICard
-          title="Completed"
-          value={stats.completed}
-          icon={FiCheckCircle}
-          trend="+8%"
-          color="green"
+          title="Washing"
+          value={stats.washing}
+          icon={FiDroplet}
+          trend=""
+          color="blue"
         />
         <KPICard
-          title="Pending Alerts"
-          value={stats.pending}
-          icon={FiAlertCircle}
-          trend="Critical"
-          color="red"
+          title="Shop Floor"
+          value={stats.shopFloor}
+          icon={FiTool}
+          trend=""
+          color="purple"
         />
-      </div>
-
-      {/* Vehicle Status Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <VehicleStatusCard />
-        </div>
-        <div>
-          <LiveAlerts />
-        </div>
+        <KPICard
+          title="Road Test"
+          value={stats.roadTest}
+          icon={FiNavigation}
+          trend=""
+          color="indigo"
+        />
+        <KPICard
+          title="JC closed but not billed"
+          value={stats.jcClosedButNotBilled}
+          icon={FiFileText}
+          trend=""
+          color="yellow"
+        />
+        <KPICard
+          title="Billed but not delivered"
+          value={stats.billedButNotDelivered}
+          icon={FiDollarSign}
+          trend=""
+          color="orange"
+        />
+        <KPICard
+          title="Delivered"
+          value={stats.delivered}
+          icon={FiCheckCircle}
+          trend=""
+          color="green"
+        />
       </div>
 
       {/* Vehicle Ticker */}
       <VehicleTicker />
-
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-        <RecentActivity />
-      </div>
     </div>
   )
 }

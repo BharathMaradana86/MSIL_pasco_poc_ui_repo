@@ -16,6 +16,7 @@ interface Vehicle {
   serviceAdvisorId?: string
   tempVehicle?: boolean
   tempRegNo?: string
+  jcOpened: boolean
 }
 
 interface ServiceAdvisor {
@@ -44,6 +45,7 @@ const mockVehicles: Vehicle[] = [
     issue: 'Engine',
     serviceAdvisor: 'Rajesh Kumar',
     serviceAdvisorId: '1',
+    jcOpened: true,
   },
   {
     id: '2',
@@ -54,6 +56,7 @@ const mockVehicles: Vehicle[] = [
     issue: 'Electrical',
     serviceAdvisor: 'Priya Sharma',
     serviceAdvisorId: '2',
+    jcOpened: true,
   },
   {
     id: '3',
@@ -62,6 +65,7 @@ const mockVehicles: Vehicle[] = [
     inTime: new Date(Date.now() - 75 * 60000),
     appointment: true,
     issue: 'Brakes',
+    jcOpened: false,
   },
   {
     id: '4',
@@ -70,6 +74,7 @@ const mockVehicles: Vehicle[] = [
     inTime: new Date(Date.now() - 60 * 60000),
     appointment: false,
     issue: 'AC',
+    jcOpened: false,
   },
   {
     id: '5',
@@ -78,6 +83,7 @@ const mockVehicles: Vehicle[] = [
     inTime: new Date(Date.now() - 45 * 60000),
     appointment: true,
     issue: 'Transmission',
+    jcOpened: false,
   },
   {
     id: '6',
@@ -86,6 +92,7 @@ const mockVehicles: Vehicle[] = [
     inTime: new Date(Date.now() - 30 * 60000),
     appointment: false,
     issue: 'Suspension',
+    jcOpened: false,
   },
   {
     id: '7',
@@ -96,6 +103,7 @@ const mockVehicles: Vehicle[] = [
     issue: 'Body',
     serviceAdvisor: 'Amit Patel',
     serviceAdvisorId: '3',
+    jcOpened: true,
   },
   {
     id: '8',
@@ -104,6 +112,7 @@ const mockVehicles: Vehicle[] = [
     inTime: new Date(Date.now() - 20 * 60000),
     appointment: false,
     issue: 'General Service',
+    jcOpened: false,
   },
   {
     id: '9',
@@ -114,6 +123,7 @@ const mockVehicles: Vehicle[] = [
     issue: 'Engine',
     serviceAdvisor: 'Sneha Verma',
     serviceAdvisorId: '4',
+    jcOpened: true,
   },
   {
     id: '10',
@@ -122,6 +132,7 @@ const mockVehicles: Vehicle[] = [
     inTime: new Date(Date.now() - 10 * 60000),
     appointment: false,
     issue: 'Electrical',
+    jcOpened: false,
   },
   {
     id: '11',
@@ -132,6 +143,7 @@ const mockVehicles: Vehicle[] = [
     issue: 'AC',
     serviceAdvisor: 'Anjali Mehta',
     serviceAdvisorId: '6',
+    jcOpened: true,
   },
   {
     id: '12',
@@ -140,6 +152,7 @@ const mockVehicles: Vehicle[] = [
     inTime: new Date(Date.now() - 5 * 60000),
     appointment: false,
     issue: 'Brakes',
+    jcOpened: false,
   },
   {
     id: '13',
@@ -150,6 +163,7 @@ const mockVehicles: Vehicle[] = [
     issue: 'Transmission',
     serviceAdvisor: 'Vikram Singh',
     serviceAdvisorId: '5',
+    jcOpened: true,
   },
   {
     id: '14',
@@ -158,6 +172,7 @@ const mockVehicles: Vehicle[] = [
     inTime: new Date(Date.now() - 2 * 60000),
     appointment: false,
     issue: 'Suspension',
+    jcOpened: false,
   },
   {
     id: '15',
@@ -166,6 +181,7 @@ const mockVehicles: Vehicle[] = [
     inTime: new Date(Date.now() - 1 * 60000),
     appointment: true,
     issue: 'Body',
+    jcOpened: false,
   },
 ]
 
@@ -177,8 +193,9 @@ export default function ReceptionDashboard() {
   const [tempVehicleModal, setTempVehicleModal] = useState<{ vehicleId: string; regNo: string } | null>(null)
   const [tempRegInput, setTempRegInput] = useState('')
 
-  const vehiclesWithSA = vehicles.filter(v => v.serviceAdvisor && !v.tempVehicle)
-  const vehiclesWithoutSA = vehicles.filter(v => !v.serviceAdvisor || v.tempVehicle)
+  // JC-based grouping
+  const vehiclesWithSA = vehicles.filter(v => v.jcOpened)
+  const vehiclesWithoutSA = vehicles.filter(v => !v.jcOpened)
 
   const getMatchingServiceAdvisors = (vehicleIssue: VehicleIssue) => {
     return serviceAdvisors
@@ -199,7 +216,16 @@ export default function ReceptionDashboard() {
 
   const handleAssignSA = (vehicleId: string, saId: string, saName: string) => {
     setVehicles(vehicles.map(v =>
-      v.id === vehicleId ? { ...v, serviceAdvisor: saName, serviceAdvisorId: saId, tempVehicle: false, tempRegNo: undefined } : v
+      v.id === vehicleId
+        ? {
+            ...v,
+            serviceAdvisor: saName,
+            serviceAdvisorId: saId,
+            tempVehicle: false,
+            tempRegNo: undefined,
+            jcOpened: true,
+          }
+        : v
     ))
     setAssigningVehicleId(null)
   }
@@ -303,9 +329,10 @@ export default function ReceptionDashboard() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">In Time</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registration Number</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer Name</th>
-                    {/* Issue column removed as per requirement */}
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service Advisor</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">JC Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Appointment</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assign Service Advisor</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Re-Assign Service Advisor</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Temporary Vehicle</th>
                   </tr>
                 </thead>
@@ -332,7 +359,27 @@ export default function ReceptionDashboard() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">{vehicle.customerName}</td>
-                      {/* Issue cell removed */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {vehicle.serviceAdvisor ? (
+                          <div className="flex items-center space-x-2">
+                            <FiUser className="w-4 h-4 text-primary-600" />
+                            <span className="text-sm font-medium">{vehicle.serviceAdvisor}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">Auto assignment pending</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {vehicle.jcOpened ? (
+                          <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
+                            JC Opened
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium">
+                            JC Not Opened
+                          </span>
+                        )}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {vehicle.appointment ? (
                           <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
@@ -350,7 +397,7 @@ export default function ReceptionDashboard() {
                           className="flex items-center space-x-2 px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm"
                         >
                           <FiUserPlus className="w-4 h-4" />
-                          <span>Assign SA</span>
+                          <span>Re-Assign SA</span>
                         </button>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -387,12 +434,9 @@ export default function ReceptionDashboard() {
           </div>
         )}
 
-        {/* Serviced Vehicles Tab */}
+        {/* In Service (JC Opened) Vehicles Tab */}
         {activeTab === 'assigned' && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Vehicles with Service Advisor Assigned</h2>
-            </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50">
@@ -403,7 +447,8 @@ export default function ReceptionDashboard() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Issue</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Appointment</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service Advisor</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">JC Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Re-Assign</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -445,12 +490,17 @@ export default function ReceptionDashboard() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
+                          JC Opened
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <button
                           onClick={() => setAssigningVehicleId(vehicle.id)}
-                          className="p-2 text-primary-600 hover:bg-primary-50 rounded"
-                          title="Reassign SA"
+                          className="flex items-center space-x-2 px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm"
                         >
-                          <FiEdit className="w-4 h-4" />
+                          <FiUserPlus className="w-4 h-4" />
+                          <span>Re-Assign SA</span>
                         </button>
                       </td>
                     </tr>
@@ -459,7 +509,7 @@ export default function ReceptionDashboard() {
               </table>
               {vehiclesWithSA.length === 0 && (
                 <div className="p-8 text-center text-gray-500">
-                  No vehicles with Service Advisor assigned
+                  No JC opened vehicles in service
                 </div>
               )}
             </div>

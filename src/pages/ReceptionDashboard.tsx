@@ -258,8 +258,10 @@ export default function ReceptionDashboard() {
           <div className="text-sm text-gray-600 mt-1">Pending Assignment</div>
         </div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <div className="text-2xl font-bold text-blue-600">{serviceAdvisors.length}</div>
-          <div className="text-sm text-gray-600 mt-1">Service Advisors</div>
+          <div className="text-2xl font-bold text-blue-600">
+            {vehiclesWithSA.length}
+          </div>
+          <div className="text-sm text-gray-600 mt-1">JC Opened</div>
         </div>
       </div>
 
@@ -274,7 +276,7 @@ export default function ReceptionDashboard() {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Non-Serviced Vehicles ({vehiclesWithoutSA.length})
+            Un Allocated ({vehiclesWithoutSA.length})
           </button>
           <button
             onClick={() => setActiveTab('assigned')}
@@ -284,19 +286,16 @@ export default function ReceptionDashboard() {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Serviced Vehicles ({vehiclesWithSA.length})
+            In Service ({vehiclesWithSA.length})
           </button>
         </nav>
       </div>
 
       {/* Tab Content */}
       <div>
-        {/* Non-Serviced Vehicles Tab */}
+        {/* Unallocated Vehicles Tab */}
         {activeTab === 'unassigned' && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Vehicles Pending Service Advisor Assignment</h2>
-            </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50">
@@ -304,7 +303,7 @@ export default function ReceptionDashboard() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">In Time</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registration Number</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Issue</th>
+                    {/* Issue column removed as per requirement */}
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Appointment</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assign Service Advisor</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Temporary Vehicle</th>
@@ -333,11 +332,7 @@ export default function ReceptionDashboard() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">{vehicle.customerName}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
-                          {vehicle.issue}
-                        </span>
-                      </td>
+                      {/* Issue cell removed */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         {vehicle.appointment ? (
                           <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">

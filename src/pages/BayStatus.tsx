@@ -283,20 +283,17 @@ export default function BayStatus() {
   const [vehicles] = useState<Vehicle[]>(mockVehicles)
   const [technicians] = useState<Technician[]>(mockTechnicians)
   const [selectedBay, setSelectedBay] = useState<Bay | null>(null)
-  const [allocationModal, setAllocationModal] = useState<'assign-vehicle' | 'assign-technician' | 'override-vehicle' | null>(null)
-  const [selectedVehicle, setSelectedVehicle] = useState<string>('')
+  const [allocationModal, setAllocationModal] = useState<'assign-technician' | null>(null)
   const [selectedTechnicians, setSelectedTechnicians] = useState<string[]>([])
   const [activeTab, setActiveTab] = useState<'metrics' | 'allocation'>('metrics')
-  const [availabilityTab, setAvailabilityTab] = useState<'bays' | 'vehicles' | 'technicians'>('bays')
 
-  const availableBays = bays.filter(bay => bay.status === 'vacant')
   const availableVehicles = vehicles.filter(v => v.status === 'ready-for-allocation')
   const availableTechnicians = technicians.filter(t => t.isAvailable)
   
   // Metrics calculations
   const totalBays = bays.length
   const occupiedBays = bays.filter(b => b.status === 'occupied').length
-  const vacantBays = availableBays.length
+  const vacantBays = bays.filter(b => b.status === 'vacant').length
   const maintenanceBays = bays.filter(b => b.status === 'maintenance').length
   const avgUtilization = Math.round(bays.reduce((sum, bay) => sum + bay.utilization, 0) / bays.length)
   const totalVehiclesInBays = occupiedBays
@@ -338,72 +335,6 @@ export default function BayStatus() {
         return 'Maintenance'
       default:
         return status
-    }
-  }
-
-  const handleAssignVehicle = () => {
-    if (selectedBay && selectedVehicle) {
-      const vehicle = vehicles.find(v => v.id === selectedVehicle)
-      if (vehicle) {
-        setBays(bays.map(bay =>
-          bay.id === selectedBay.id
-            ? {
-                ...bay,
-                status: 'occupied',
-                vehicleReg: vehicle.regNo,
-                vehicleId: vehicle.id,
-                customerName: vehicle.customerName,
-                startTime: new Date(),
-              }
-            : bay
-        ))
-        setAllocationModal(null)
-        setSelectedBay(null)
-        setSelectedVehicle('')
-      }
-    }
-  }
-
-  const handleOverrideVehicle = () => {
-    if (selectedBay && selectedVehicle) {
-      const vehicle = vehicles.find(v => v.id === selectedVehicle)
-      if (vehicle) {
-        // Remove vehicle from previous bay if any
-        const previousBay = bays.find(b => b.vehicleId === vehicle.id)
-        if (previousBay) {
-          setBays(bays.map(bay =>
-            bay.id === previousBay.id
-              ? {
-                  ...bay,
-                  status: 'vacant',
-                  vehicleReg: undefined,
-                  vehicleId: undefined,
-                  customerName: undefined,
-                  technicianIds: undefined,
-                  technicians: undefined,
-                  startTime: undefined,
-                  estimatedCompletion: undefined,
-                }
-              : bay
-          ))
-        }
-
-        // Assign to new bay
-        setBays(bays.map(bay =>
-          bay.id === selectedBay.id
-            ? {
-                ...bay,
-                vehicleReg: vehicle.regNo,
-                vehicleId: vehicle.id,
-                customerName: vehicle.customerName,
-                startTime: new Date(),
-              }
-            : bay
-        ))
-        setAllocationModal(null)
-        setSelectedBay(null)
-        setSelectedVehicle('')
-      }
     }
   }
 
@@ -459,13 +390,10 @@ export default function BayStatus() {
     ))
   }
 
-  const openAllocationModal = (bay: Bay, type: 'assign-vehicle' | 'assign-technician' | 'override-vehicle') => {
+  const openAllocationModal = (bay: Bay, type: 'assign-technician') => {
     setSelectedBay(bay)
     setAllocationModal(type)
-    if (type === 'override-vehicle' && bay.vehicleId) {
-      setSelectedVehicle(bay.vehicleId)
-    }
-    if (type === 'assign-technician' && bay.technicianIds) {
+    if (bay.technicianIds) {
       setSelectedTechnicians([...bay.technicianIds])
     }
   }
@@ -602,11 +530,11 @@ export default function BayStatus() {
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {bays.map((bay) => {
                   const getUtilizationColor = (util: number) => {
-                    if (util >= 80) return 'bg-red-500 text-white'
-                    if (util >= 60) return 'bg-orange-500 text-white'
-                    if (util >= 40) return 'bg-yellow-500 text-white'
-                    if (util >= 20) return 'bg-green-500 text-white'
-                    return 'bg-gray-300 text-gray-700'
+                    if (util >= 80) return 'bg-green-900 text-white'
+                    if (util >= 60) return 'bg-green-700 text-white'
+                    if (util >= 40) return 'bg-green-500 text-white'
+                    if (util >= 20) return 'bg-green-200 text-gray-800'
+                    return 'bg-white text-gray-800 border border-green-100'
                   }
                   
                   return (
@@ -629,23 +557,23 @@ export default function BayStatus() {
               </div>
               <div className="mt-4 flex items-center justify-center space-x-4 text-xs">
                 <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-red-500 rounded"></div>
+                  <div className="w-4 h-4 bg-green-900 rounded"></div>
                   <span>High (80-100%)</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-orange-500 rounded"></div>
+                  <div className="w-4 h-4 bg-green-700 rounded"></div>
                   <span>Medium-High (60-79%)</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                  <div className="w-4 h-4 bg-green-500 rounded"></div>
                   <span>Medium (40-59%)</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-green-500 rounded"></div>
+                  <div className="w-4 h-4 bg-green-200 rounded"></div>
                   <span>Low (20-39%)</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-gray-300 rounded"></div>
+                  <div className="w-4 h-4 bg-white border border-green-100 rounded"></div>
                   <span>Very Low (0-19%)</span>
                 </div>
               </div>
@@ -657,228 +585,114 @@ export default function BayStatus() {
         {activeTab === 'allocation' && (
           <div className="space-y-6">
             {/* All Bays Grid */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">All Bays</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-          {bays.map((bay) => (
-            <div
-              key={bay.id}
-              className={`rounded-lg border-2 p-4 ${getStatusColor(bay.status)} transition-all hover:shadow-md`}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <h3 className="text-base font-semibold">{bay.name}</h3>
-                  <p className="text-xs mt-0.5 opacity-75">{bay.type}</p>
-                </div>
-                <div className="ml-2">
-                  {getStatusIcon(bay.status)}
-                </div>
-              </div>
-
-              <div className="mb-2">
-                <span className="text-xs font-medium opacity-75">
-                  {getStatusLabel(bay.status)}
-                </span>
-              </div>
-
-              {bay.status === 'occupied' && (
-                <div className="mt-3 pt-3 border-t border-current border-opacity-20 space-y-2">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="text-xs font-medium truncate">{bay.vehicleReg}</p>
-                      <p className="text-xs opacity-75 truncate mt-0.5">{bay.customerName}</p>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveVehicle(bay.id)}
-                      className="p-1 hover:bg-red-200 rounded opacity-75 hover:opacity-100"
-                      title="Remove Vehicle"
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* All Bays Grid (left, spans 2 columns on large screens) */}
+              <div className="lg:col-span-2">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">All Bays</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {bays.map((bay) => (
+                    <div
+                      key={bay.id}
+                      className={`rounded-lg border-2 p-4 ${getStatusColor(bay.status)} transition-all hover:shadow-md`}
                     >
-                      <FiX className="w-3 h-3" />
-                    </button>
-                  </div>
-                  
-                  {bay.technicians && bay.technicians.length > 0 && (
-                    <div className="mt-2 space-y-1">
-                      {bay.technicians.map((tech, idx) => (
-                        <div key={idx} className="flex items-center justify-between text-xs">
-                          <span className="truncate">{tech}</span>
-                          <button
-                            onClick={() => handleRemoveTechnician(bay.id, bay.technicianIds?.[idx] || '')}
-                            className="p-0.5 hover:bg-red-200 rounded opacity-50 hover:opacity-100"
-                            title="Remove Technician"
-                          >
-                            <FiX className="w-2.5 h-2.5" />
-                          </button>
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h3 className="text-base font-semibold">{bay.name}</h3>
+                          <p className="text-xs mt-0.5 opacity-75">{bay.type}</p>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                        <div className="ml-2">
+                          {getStatusIcon(bay.status)}
+                        </div>
+                      </div>
 
-                  <div className="mt-3 flex flex-wrap gap-1">
-                    <button
-                      onClick={() => openAllocationModal(bay, 'override-vehicle')}
-                      className="flex-1 px-2 py-1 text-xs bg-white bg-opacity-50 hover:bg-opacity-75 rounded border border-current border-opacity-30"
-                    >
-                      <FiEdit className="w-3 h-3 inline mr-1" />
-                      Override
-                    </button>
-                    <button
-                      onClick={() => openAllocationModal(bay, 'assign-technician')}
-                      className="flex-1 px-2 py-1 text-xs bg-white bg-opacity-50 hover:bg-opacity-75 rounded border border-current border-opacity-30"
-                    >
-                      <FiUser className="w-3 h-3 inline mr-1" />
-                      {bay.technicians && bay.technicians.length > 0 ? 'Edit Tech' : 'Assign Tech'}
-                    </button>
-                  </div>
-                </div>
-              )}
+                      <div className="mb-2">
+                        <span className="text-xs font-medium opacity-75">
+                          {getStatusLabel(bay.status)}
+                        </span>
+                      </div>
 
-              {bay.status === 'vacant' && (
-                <div className="mt-3 pt-3 border-t border-current border-opacity-20">
-                  <button
-                    onClick={() => openAllocationModal(bay, 'assign-vehicle')}
-                    className="w-full px-2 py-1.5 text-xs bg-white bg-opacity-50 hover:bg-opacity-75 rounded border border-current border-opacity-30 flex items-center justify-center space-x-1"
-                  >
-                    <FiPlus className="w-3 h-3" />
-                    <span>Assign Vehicle</span>
-                  </button>
-                </div>
-              )}
-
-              {bay.status === 'maintenance' && (
-                <div className="mt-3 pt-3 border-t border-current border-opacity-20">
-                  <p className="text-xs opacity-75">Under Maintenance</p>
-                </div>
-              )}
-            </div>
-              ))}
-              </div>
-
-              {/* Availabilities Tabs */}
-              <div className="mt-6 bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="border-b border-gray-200">
-                  <nav className="flex space-x-8 px-6">
-                    <button
-                      onClick={() => setAvailabilityTab('bays')}
-                      className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                        availabilityTab === 'bays'
-                          ? 'border-primary-500 text-primary-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                      }`}
-                    >
-                      Available Bays ({availableBays.length})
-                    </button>
-                    <button
-                      onClick={() => setAvailabilityTab('vehicles')}
-                      className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                        availabilityTab === 'vehicles'
-                          ? 'border-primary-500 text-primary-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                      }`}
-                    >
-                      Available Vehicles ({availableVehicles.length})
-                    </button>
-                    <button
-                      onClick={() => setAvailabilityTab('technicians')}
-                      className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                        availabilityTab === 'technicians'
-                          ? 'border-primary-500 text-primary-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                      }`}
-                    >
-                      Available Technicians ({availableTechnicians.length})
-                    </button>
-                  </nav>
-                </div>
-                <div className="p-6">
-                  {/* Available Bays Tab Content */}
-                  {availabilityTab === 'bays' && (
-                    <div>
-                      {availableBays.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {availableBays.map((bay) => (
-                            <div
-                              key={bay.id}
-                              className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg"
-                            >
-                              <div>
-                                <p className="font-medium text-gray-900">{bay.name}</p>
-                                <p className="text-sm text-gray-600">{bay.type}</p>
+                      {bay.status !== 'maintenance' && (
+                        <div className="mt-3 pt-3 border-t border-current border-opacity-20 space-y-2">
+                          {bay.status === 'occupied' && (
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <p className="text-xs font-medium truncate">{bay.vehicleReg}</p>
+                                <p className="text-xs opacity-75 truncate mt-0.5">{bay.customerName}</p>
                               </div>
                               <button
-                                onClick={() => openAllocationModal(bay, 'assign-vehicle')}
-                                className="px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm flex items-center space-x-1"
+                                onClick={() => handleRemoveVehicle(bay.id)}
+                                className="p-1 hover:bg-red-200 rounded opacity-75 hover:opacity-100"
+                                title="Remove Vehicle"
                               >
-                                <FiPlus className="w-4 h-4" />
-                                <span>Assign</span>
+                                <FiX className="w-3 h-3" />
                               </button>
                             </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-gray-500 text-center py-4">No available bays</p>
-                      )}
-                    </div>
-                  )}
+                          )}
 
-                  {/* Available Vehicles Tab Content */}
-                  {availabilityTab === 'vehicles' && (
-                    <div>
-                      {availableVehicles.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {availableVehicles.map((vehicle) => (
-                            <div
-                              key={vehicle.id}
-                              className="p-3 bg-blue-50 border border-blue-200 rounded-lg"
-                            >
-                              <p className="font-medium text-gray-900">{vehicle.regNo}</p>
-                              <p className="text-sm text-gray-600">{vehicle.customerName}</p>
-                              <p className="text-xs text-gray-500">{vehicle.model} - {vehicle.serviceType}</p>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-gray-500 text-center py-4">No vehicles ready for allocation</p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Available Technicians Tab Content */}
-                  {availabilityTab === 'technicians' && (
-                    <div>
-                      {availableTechnicians.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {availableTechnicians.map((tech) => (
-                            <div
-                              key={tech.id}
-                              className="p-4 bg-green-50 border border-green-200 rounded-lg"
-                            >
-                              <div className="flex items-center justify-between mb-2">
-                                <div>
-                                  <p className="font-medium text-gray-900">{tech.name}</p>
-                                  <p className="text-sm text-gray-600">{tech.role}</p>
-                                </div>
-                                <FiUser className="w-5 h-5 text-green-600" />
-                              </div>
-                              <div className="flex flex-wrap gap-1 mt-2">
-                                {tech.skills.map((skill, idx) => (
-                                  <span
-                                    key={idx}
-                                    className="px-2 py-0.5 bg-white text-xs rounded border border-green-200"
+                          {bay.technicians && bay.technicians.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              {bay.technicians.map((tech, idx) => (
+                                <div key={idx} className="flex items-center justify-between text-xs">
+                                  <span className="truncate">{tech}</span>
+                                  <button
+                                    onClick={() => handleRemoveTechnician(bay.id, bay.technicianIds?.[idx] || '')}
+                                    className="p-0.5 hover:bg-red-200 rounded opacity-50 hover:opacity-100"
+                                    title="Remove Technician"
                                   >
-                                    {skill}
-                                  </span>
-                                ))}
-                              </div>
+                                    <FiX className="w-2.5 h-2.5" />
+                                  </button>
+                                </div>
+                              ))}
                             </div>
-                          ))}
+                          )}
+
+                          <div className="mt-3">
+                            <button
+                              onClick={() => openAllocationModal(bay, 'assign-technician')}
+                              className="w-full px-2 py-1 text-xs bg-white bg-opacity-50 hover:bg-opacity-75 rounded border border-current border-opacity-30 flex items-center justify-center space-x-1"
+                            >
+                              <FiUser className="w-3 h-3" />
+                              <span>
+                                {bay.technicians && bay.technicians.length > 0
+                                  ? 'Edit Technicians'
+                                  : 'Add Technicians'}
+                              </span>
+                            </button>
+                          </div>
                         </div>
-                      ) : (
-                        <p className="text-gray-500 text-center py-4">No available technicians</p>
+                      )}
+
+                      {bay.status === 'maintenance' && (
+                        <div className="mt-3 pt-3 border-t border-current border-opacity-20">
+                          <p className="text-xs opacity-75">Under Maintenance</p>
+                        </div>
                       )}
                     </div>
-                  )}
+                  ))}
                 </div>
+              </div>
+
+              {/* Right Sidebar - Available Vehicles */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <h3 className="text-md font-semibold text-gray-900 mb-3">Available Vehicles</h3>
+                {availableVehicles.length > 0 ? (
+                  <div className="space-y-2 max-h-[420px] overflow-y-auto">
+                    {availableVehicles.map((vehicle) => (
+                      <div
+                        key={vehicle.id}
+                        className="p-3 bg-blue-50 border border-blue-200 rounded-lg"
+                      >
+                        <p className="font-medium text-gray-900">{vehicle.regNo}</p>
+                        <p className="text-sm text-gray-600">{vehicle.customerName}</p>
+                        <p className="text-xs text-gray-500">
+                          {vehicle.model} - {vehicle.serviceType}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No vehicles ready for allocation</p>
+                )}
               </div>
             </div>
           </div>
@@ -891,9 +705,7 @@ export default function BayStatus() {
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
-                {allocationModal === 'assign-vehicle' && `Assign Vehicle to ${selectedBay.name}`}
-                {allocationModal === 'override-vehicle' && `Override Vehicle in ${selectedBay.name}`}
-                {allocationModal === 'assign-technician' && `Assign Technicians to ${selectedBay.name}`}
+                Assign Technicians to {selectedBay.name}
               </h3>
               <button
                 onClick={() => {
@@ -907,83 +719,6 @@ export default function BayStatus() {
                 <FiX className="w-5 h-5" />
               </button>
             </div>
-
-            {/* Assign/Override Vehicle Modal */}
-            {(allocationModal === 'assign-vehicle' || allocationModal === 'override-vehicle') && (
-              <div className="space-y-4">
-                {allocationModal === 'override-vehicle' && selectedBay.vehicleReg && (
-                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <FiAlertCircle className="w-4 h-4 text-yellow-600" />
-                      <p className="text-sm text-yellow-800">
-                        Current vehicle: <span className="font-medium">{selectedBay.vehicleReg}</span> will be replaced
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Vehicle
-                  </label>
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {vehicles
-                      .filter(v => allocationModal === 'override-vehicle' || v.status === 'ready-for-allocation')
-                      .map((vehicle) => (
-                        <button
-                          key={vehicle.id}
-                          onClick={() => setSelectedVehicle(vehicle.id)}
-                          className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
-                            selectedVehicle === vehicle.id
-                              ? 'border-primary-500 bg-primary-50'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium text-gray-900">{vehicle.regNo}</p>
-                              <p className="text-sm text-gray-600">{vehicle.customerName}</p>
-                              <p className="text-xs text-gray-500">{vehicle.model} - {vehicle.serviceType}</p>
-                            </div>
-                            {vehicle.currentBayId && (
-                              <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded">
-                                Bay {bays.find(b => b.id === vehicle.currentBayId)?.name}
-                              </span>
-                            )}
-                          </div>
-                        </button>
-                      ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3 pt-4 border-t">
-                  <button
-                    onClick={() => {
-                      if (allocationModal === 'assign-vehicle') {
-                        handleAssignVehicle()
-                      } else {
-                        handleOverrideVehicle()
-                      }
-                    }}
-                    disabled={!selectedVehicle}
-                    className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {allocationModal === 'assign-vehicle' ? 'Assign Vehicle' : 'Override Vehicle'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setAllocationModal(null)
-                      setSelectedBay(null)
-                      setSelectedVehicle('')
-                    }}
-                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
-
             {/* Assign Technician Modal */}
             {allocationModal === 'assign-technician' && (
               <div className="space-y-4">

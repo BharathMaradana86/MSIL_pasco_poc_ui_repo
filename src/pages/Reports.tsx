@@ -328,20 +328,12 @@ export default function Reports() {
               <h2 className="text-lg font-semibold text-gray-900">Workshop KPI</h2>
               <TimeFilter onClear={clearTimeFilter} />
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {mockKPIs[0] && (
                 <>
                   <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-xs text-gray-600 mb-1">Date</p>
-                    <p className="text-lg font-bold text-gray-900">{mockKPIs[0].date}</p>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <p className="text-xs text-gray-600 mb-1">Total Labours</p>
                     <p className="text-lg font-bold text-gray-900">{mockKPIs[0].totalLabours}</p>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-xs text-gray-600 mb-1">Parts</p>
-                    <p className="text-lg font-bold text-gray-900">{mockKPIs[0].parts}</p>
                   </div>
                   <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <p className="text-xs text-gray-600 mb-1">VAS</p>

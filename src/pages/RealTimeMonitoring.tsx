@@ -10,8 +10,8 @@ export default function RealTimeMonitoring() {
         <p className="text-gray-600 mt-1">Live operational oversight and vehicle tracking</p>
       </div>
 
-      {/* Vehicle Ticker */}
-      <VehicleTicker />
+      {/* Vehicle Ticker - status view (Done / Pending / In Progress) */}
+      <VehicleTicker mode="status" />
 
       {/* Vehicle Tracking Logs */}
       <VehicleTrackingLogs />

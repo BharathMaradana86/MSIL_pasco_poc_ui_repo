@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { FiTruck, FiClock, FiCheckCircle, FiSearch, FiChevronLeft, FiChevronRight, FiCalendar } from 'react-icons/fi'
+import { FiTruck, FiClock, FiCheckCircle, FiSearch, FiChevronLeft, FiChevronRight, FiCalendar, FiAlertCircle } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 
 interface VehicleStatus {
@@ -7,6 +7,7 @@ interface VehicleStatus {
   advisor: string
   model: string
   serviceType: string
+  status: 'pending' | 'in-progress' | 'completed'
   jcOpening: string
   washing: string
   shopFloor: string
@@ -21,6 +22,7 @@ const mockVehicles: VehicleStatus[] = [
     advisor: 'Rajesh Kumar',
     model: 'Swift',
     serviceType: 'Periodic Service',
+    status: 'completed',
     jcOpening: '09:00',
     washing: '09:15',
     shopFloor: '09:30',
@@ -33,6 +35,7 @@ const mockVehicles: VehicleStatus[] = [
     advisor: 'Priya Sharma',
     model: 'Baleno',
     serviceType: 'Repair',
+    status: 'in-progress',
     jcOpening: '09:30',
     washing: '09:45',
     shopFloor: '10:00',
@@ -45,6 +48,7 @@ const mockVehicles: VehicleStatus[] = [
     advisor: 'Amit Patel',
     model: 'Dzire',
     serviceType: 'Periodic Service',
+    status: 'completed',
     jcOpening: '10:00',
     washing: '10:15',
     shopFloor: '10:30',
@@ -57,6 +61,7 @@ const mockVehicles: VehicleStatus[] = [
     advisor: 'Sneha Verma',
     model: 'Vitara',
     serviceType: 'Repair',
+    status: 'in-progress',
     jcOpening: '10:30',
     washing: '10:45',
     shopFloor: '11:00',
@@ -69,6 +74,7 @@ const mockVehicles: VehicleStatus[] = [
     advisor: 'Rajesh Kumar',
     model: 'Swift',
     serviceType: 'Periodic Service',
+    status: 'completed',
     jcOpening: '11:00',
     washing: '11:15',
     shopFloor: '11:30',
@@ -81,6 +87,7 @@ const mockVehicles: VehicleStatus[] = [
     advisor: 'Priya Sharma',
     model: 'Baleno',
     serviceType: 'Repair',
+    status: 'in-progress',
     jcOpening: '11:30',
     washing: '11:45',
     shopFloor: '12:00',
@@ -93,6 +100,7 @@ const mockVehicles: VehicleStatus[] = [
     advisor: 'Amit Patel',
     model: 'Dzire',
     serviceType: 'Periodic Service',
+    status: 'completed',
     jcOpening: '12:00',
     washing: '12:15',
     shopFloor: '12:30',
@@ -105,6 +113,7 @@ const mockVehicles: VehicleStatus[] = [
     advisor: 'Sneha Verma',
     model: 'Vitara',
     serviceType: 'Repair',
+    status: 'in-progress',
     jcOpening: '12:30',
     washing: '12:45',
     shopFloor: '13:00',
@@ -117,6 +126,7 @@ const mockVehicles: VehicleStatus[] = [
     advisor: 'Rajesh Kumar',
     model: 'Swift',
     serviceType: 'Periodic Service',
+    status: 'completed',
     jcOpening: '13:00',
     washing: '13:15',
     shopFloor: '13:30',
@@ -129,6 +139,7 @@ const mockVehicles: VehicleStatus[] = [
     advisor: 'Priya Sharma',
     model: 'Baleno',
     serviceType: 'Repair',
+    status: 'pending',
     jcOpening: '13:30',
     washing: '13:45',
     shopFloor: '14:00',
@@ -138,7 +149,11 @@ const mockVehicles: VehicleStatus[] = [
   },
 ]
 
-export default function VehicleTicker() {
+interface VehicleTickerProps {
+  mode?: 'time' | 'status'
+}
+
+export default function VehicleTicker({ mode = 'status' }: VehicleTickerProps) {
   const [vehicles] = useState<VehicleStatus[]>(mockVehicles)
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
@@ -149,6 +164,23 @@ export default function VehicleTicker() {
   const navigate = useNavigate()
 
   const itemsPerPage = 5
+
+  const renderStageIcon = (value: string) => {
+    if (!value || value === '-' || value.toLowerCase() === 'pending') {
+      return (
+        <span className="inline-flex items-center space-x-1 text-orange-600">
+          <FiAlertCircle className="w-3 h-3" />
+          <span className="text-xs">Pending</span>
+        </span>
+      )
+    }
+    return (
+      <span className="inline-flex items-center space-x-1 text-green-600">
+        <FiCheckCircle className="w-3 h-3" />
+        <span className="text-xs">Done</span>
+      </span>
+    )
+  }
 
   const filteredVehicles = useMemo(() => {
     let filtered = vehicles
@@ -328,12 +360,18 @@ export default function VehicleTicker() {
               <th className="text-left py-3 px-4 font-semibold text-gray-700">Shop Floor</th>
               <th className="text-left py-3 px-4 font-semibold text-gray-700">Road Test</th>
               <th className="text-left py-3 px-4 font-semibold text-gray-700">Delivery</th>
+              {mode === 'status' && (
+                <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+              )}
             </tr>
           </thead>
           <tbody>
             {paginatedVehicles.length === 0 ? (
               <tr>
-                <td colSpan={9} className="py-8 text-center text-gray-500">
+                <td
+                  colSpan={mode === 'status' ? 10 : 9}
+                  className="py-8 text-center text-gray-500"
+                >
                   No vehicles found
                 </td>
               </tr>
@@ -358,25 +396,61 @@ export default function VehicleTicker() {
                       {vehicle.serviceType}
                     </span>
                   </td>
-                  <td className="py-3 px-4">
-                    <span className="flex items-center space-x-1">
-                      <FiClock className="w-3 h-3 text-green-600" />
-                      <span>{vehicle.jcOpening}</span>
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">{vehicle.washing}</td>
-                  <td className="py-3 px-4">{vehicle.shopFloor}</td>
-                  <td className="py-3 px-4">{vehicle.roadTest}</td>
-                  <td className="py-3 px-4">
-                    {vehicle.delivery === 'Pending' ? (
-                      <span className="text-orange-600 font-medium">Pending</span>
-                    ) : (
-                      <span className="flex items-center space-x-1 text-green-600">
-                        <FiCheckCircle className="w-4 h-4" />
-                        <span>{vehicle.delivery}</span>
-                      </span>
-                    )}
-                  </td>
+                  {mode === 'status' ? (
+                    <>
+                      <td className="py-3 px-4">
+                        {renderStageIcon(vehicle.jcOpening)}
+                      </td>
+                      <td className="py-3 px-4">{renderStageIcon(vehicle.washing)}</td>
+                      <td className="py-3 px-4">{renderStageIcon(vehicle.shopFloor)}</td>
+                      <td className="py-3 px-4">{renderStageIcon(vehicle.roadTest)}</td>
+                      <td className="py-3 px-4">
+                        {renderStageIcon(vehicle.delivery)}
+                      </td>
+                      <td className="py-3 px-4">
+                        {vehicle.status === 'completed' && (
+                          <span className="inline-flex items-center space-x-1 text-green-600 font-medium">
+                            <FiCheckCircle className="w-3 h-3" />
+                            <span>Completed</span>
+                          </span>
+                        )}
+                        {vehicle.status === 'in-progress' && (
+                          <span className="inline-flex items-center space-x-1 text-blue-600 font-medium">
+                            <FiClock className="w-3 h-3" />
+                            <span>In Progress</span>
+                          </span>
+                        )}
+                        {vehicle.status === 'pending' && (
+                          <span className="inline-flex items-center space-x-1 text-orange-600 font-medium">
+                            <FiAlertCircle className="w-3 h-3" />
+                            <span>Pending</span>
+                          </span>
+                        )}
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="py-3 px-4">
+                        <span className="flex items-center space-x-1">
+                          <FiClock className="w-3 h-3 text-green-600" />
+                          <span>{vehicle.jcOpening}</span>
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">{vehicle.washing}</td>
+                      <td className="py-3 px-4">{vehicle.shopFloor}</td>
+                      <td className="py-3 px-4">{vehicle.roadTest}</td>
+                      <td className="py-3 px-4">
+                        {vehicle.delivery === 'Pending' ? (
+                          <span className="text-orange-600 font-medium">Pending</span>
+                        ) : (
+                          <span className="flex items-center space-x-1 text-green-600">
+                            <FiCheckCircle className="w-4 h-4" />
+                            <span>{vehicle.delivery}</span>
+                          </span>
+                        )}
+                      </td>
+                    </>
+                  )}
                 </tr>
               ))
             )}

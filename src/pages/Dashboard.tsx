@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FiFileText, FiDroplet, FiTool, FiNavigation, FiCheckCircle, FiDollarSign, FiTruck } from 'react-icons/fi'
+import { FiFileText, FiDroplet, FiTool, FiNavigation, FiCheckCircle, FiBook, FiTruck } from 'react-icons/fi'
 import KPICard from '../components/Dashboard/KPICard'
 import VehicleTicker from '../components/Dashboard/VehicleTicker'
 
@@ -79,7 +79,7 @@ export default function Dashboard() {
         <KPICard
           title="Billed but not delivered"
           value={stats.billedButNotDelivered}
-          icon={FiDollarSign}
+          icon={FiBook}
           trend=""
           color="orange"
         />
@@ -92,8 +92,8 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Vehicle Ticker */}
-      <VehicleTicker />
+      {/* Vehicle Ticker - show stage times */}
+      <VehicleTicker mode="time" />
     </div>
   )
 }

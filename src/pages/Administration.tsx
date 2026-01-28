@@ -27,6 +27,11 @@ interface AlertThreshold {
   threshold: number
   unit: string
   severity: 'low' | 'medium' | 'high'
+  escalationLevels?: {
+    level: number
+    threshold: number
+    role: string
+  }[]
 }
 
 interface ManpowerAttendance {
@@ -34,9 +39,8 @@ interface ManpowerAttendance {
   name: string
   role: string
   date: string
-  checkIn: string
-  checkOut: string
-  status: 'present' | 'absent' | 'late' | 'half-day'
+  status: 'present' | 'absent'
+  lastSynced: string
 }
 
 interface Camera {
@@ -61,6 +65,7 @@ interface VehicleRejection {
   verifiedBy?: string
   verifiedAt?: Date
   images: string[]
+  feedback?: string
 }
 
 const mockWorkingHours: WorkingHours[] = [
@@ -73,19 +78,74 @@ const mockWorkingHours: WorkingHours[] = [
   { day: 'Sunday', startTime: '00:00', endTime: '00:00', isActive: false },
 ]
 
+const mockRolesForStation = [
+  'Service Advisor',
+  'Workshop Manager',
+  'Floor Supervisor',
+  'Washing Incharge',
+  'Yard Incharge',
+]
+
 const mockAlertThresholds: AlertThreshold[] = [
-  { id: '1', alertType: 'JC Not Opened', threshold: 10, unit: 'minutes', severity: 'high' },
-  { id: '2', alertType: 'Washing Delay', threshold: 30, unit: 'minutes', severity: 'medium' },
-  { id: '3', alertType: 'Bay Allocation Delay', threshold: 15, unit: 'minutes', severity: 'high' },
-  { id: '4', alertType: 'Service Completion Delay', threshold: 60, unit: 'minutes', severity: 'medium' },
-  { id: '5', alertType: 'Vehicle Idle Time', threshold: 120, unit: 'minutes', severity: 'low' },
+  {
+    id: '1',
+    alertType: 'JC Not Opened',
+    threshold: 10,
+    unit: 'minutes',
+    severity: 'high',
+    escalationLevels: [
+      { level: 1, threshold: 10, role: 'Service Advisor' },
+      { level: 2, threshold: 20, role: 'Workshop Manager' },
+    ],
+  },
+  {
+    id: '2',
+    alertType: 'Washing Delay',
+    threshold: 30,
+    unit: 'minutes',
+    severity: 'medium',
+    escalationLevels: [
+      { level: 1, threshold: 30, role: 'Washing Incharge' },
+    ],
+  },
+  {
+    id: '3',
+    alertType: 'Bay Allocation Delay',
+    threshold: 15,
+    unit: 'minutes',
+    severity: 'high',
+    escalationLevels: [
+      { level: 1, threshold: 15, role: 'Floor Supervisor' },
+      { level: 2, threshold: 30, role: 'Workshop Manager' },
+    ],
+  },
+  {
+    id: '4',
+    alertType: 'Service Completion Delay',
+    threshold: 60,
+    unit: 'minutes',
+    severity: 'medium',
+    escalationLevels: [
+      { level: 1, threshold: 60, role: 'Service Advisor' },
+    ],
+  },
+  {
+    id: '5',
+    alertType: 'Vehicle Idle Time',
+    threshold: 120,
+    unit: 'minutes',
+    severity: 'low',
+    escalationLevels: [
+      { level: 1, threshold: 120, role: 'Yard Incharge' },
+    ],
+  },
 ]
 
 const mockManpowerAttendance: ManpowerAttendance[] = [
-  { id: '1', name: 'Amit Patel', role: 'Senior Technician', date: '2024-01-15', checkIn: '08:55', checkOut: '18:10', status: 'present' },
-  { id: '2', name: 'Rajesh Kumar', role: 'Technician', date: '2024-01-15', checkIn: '09:15', checkOut: '18:00', status: 'late' },
-  { id: '3', name: 'Priya Sharma', role: 'Senior Technician', date: '2024-01-15', checkIn: '08:50', checkOut: '17:30', status: 'present' },
-  { id: '4', name: 'Sneha Verma', role: 'Technician', date: '2024-01-15', checkIn: '-', checkOut: '-', status: 'absent' },
+  { id: '1', name: 'Amit Patel', role: 'Senior Technician', date: '2024-01-15', status: 'present', lastSynced: '2024-01-15 18:10' },
+  { id: '2', name: 'Rajesh Kumar', role: 'Technician', date: '2024-01-15', status: 'present', lastSynced: '2024-01-15 18:00' },
+  { id: '3', name: 'Priya Sharma', role: 'Senior Technician', date: '2024-01-15', status: 'present', lastSynced: '2024-01-15 17:30' },
+  { id: '4', name: 'Sneha Verma', role: 'Technician', date: '2024-01-15', status: 'absent', lastSynced: '2024-01-15 09:00' },
 ]
 
 const mockCameras: Camera[] = [
@@ -171,13 +231,17 @@ export default function Administration() {
   const [settingsTab, setSettingsTab] = useState<'working-hours' | 'alerts' | 'manpower' | 'cameras'>('working-hours')
   const [workingHours, setWorkingHours] = useState<WorkingHours[]>(mockWorkingHours)
   const [alertThresholds, setAlertThresholds] = useState<AlertThreshold[]>(mockAlertThresholds)
-  const [manpowerAttendance] = useState<ManpowerAttendance[]>(mockManpowerAttendance)
+  const [manpowerAttendance, setManpowerAttendance] = useState<ManpowerAttendance[]>(mockManpowerAttendance)
   const [cameras] = useState<Camera[]>(mockCameras)
   const [vehicleRejections, setVehicleRejections] = useState<VehicleRejection[]>(mockVehicleRejections)
   const [editingWorkingHours, setEditingWorkingHours] = useState<string | null>(null)
   const [editingThreshold, setEditingThreshold] = useState<string | null>(null)
+  const [activeAlertConfig, setActiveAlertConfig] = useState<AlertThreshold | null>(null)
+  const [baseThresholdInput, setBaseThresholdInput] = useState('')
   const [selectedRejection, setSelectedRejection] = useState<string | null>(null)
   const [viewingImages, setViewingImages] = useState<string[] | null>(null)
+  const [editingFeedback, setEditingFeedback] = useState<VehicleRejection | null>(null)
+  const [feedbackText, setFeedbackText] = useState('')
 
   const handleSaveWorkingHours = (day: string, startTime: string, endTime: string, isActive: boolean) => {
     setWorkingHours(workingHours.map(wh =>
@@ -193,6 +257,59 @@ export default function Administration() {
     setEditingThreshold(null)
   }
 
+  const handleAddEscalationLevel = (id: string) => {
+    setAlertThresholds(prev =>
+      prev.map(at => {
+        if (at.id !== id) return at
+        const levels = at.escalationLevels || []
+        const nextLevel = levels.length > 0 ? Math.max(...levels.map(l => l.level)) + 1 : 1
+        return {
+          ...at,
+          escalationLevels: [
+            ...levels,
+            {
+              level: nextLevel,
+              threshold: at.threshold,
+              role: mockRolesForStation[0],
+            },
+          ],
+        }
+      })
+    )
+  }
+
+  const handleUpdateEscalationThreshold = (alertId: string, levelIndex: number, value: number) => {
+    setAlertThresholds(prev =>
+      prev.map(at => {
+        if (at.id !== alertId || !at.escalationLevels) return at
+        const updated = [...at.escalationLevels]
+        updated[levelIndex] = { ...updated[levelIndex], threshold: value }
+        return { ...at, escalationLevels: updated }
+      })
+    )
+  }
+
+  const handleUpdateEscalationRole = (alertId: string, levelIndex: number, role: string) => {
+    setAlertThresholds(prev =>
+      prev.map(at => {
+        if (at.id !== alertId || !at.escalationLevels) return at
+        const updated = [...at.escalationLevels]
+        updated[levelIndex] = { ...updated[levelIndex], role }
+        return { ...at, escalationLevels: updated }
+      })
+    )
+  }
+
+  const handleRemoveEscalationLevel = (alertId: string, levelIndex: number) => {
+    setAlertThresholds(prev =>
+      prev.map(at => {
+        if (at.id !== alertId || !at.escalationLevels) return at
+        const updated = at.escalationLevels.filter((_, idx) => idx !== levelIndex)
+        return { ...at, escalationLevels: updated }
+      })
+    )
+  }
+
   const handleRejectVehicle = (id: string, action: 'approve' | 'reject') => {
     setVehicleRejections(vehicleRejections.map(vr =>
       vr.id === id
@@ -205,6 +322,18 @@ export default function Administration() {
         : vr
     ))
     setSelectedRejection(null)
+  }
+
+  const handleSaveFeedback = () => {
+    if (editingFeedback) {
+      setVehicleRejections(prev =>
+        prev.map(v =>
+          v.id === editingFeedback.id ? { ...v, feedback: feedbackText.trim() || undefined } : v
+        )
+      )
+      setEditingFeedback(null)
+      setFeedbackText('')
+    }
   }
 
   const getHealthStatusColor = (status: string) => {
@@ -224,12 +353,8 @@ export default function Administration() {
     switch (status) {
       case 'present':
         return 'bg-green-100 text-green-700'
-      case 'late':
-        return 'bg-yellow-100 text-yellow-700'
       case 'absent':
         return 'bg-red-100 text-red-700'
-      case 'half-day':
-        return 'bg-orange-100 text-orange-700'
       default:
         return 'bg-gray-100 text-gray-700'
     }
@@ -237,7 +362,7 @@ export default function Administration() {
 
   const tabs = [
     { id: 'settings', label: 'Settings' },
-    { id: 'vehicle-rejection', label: 'Vehicle Rejection' },
+    { id: 'vehicle-rejection', label: 'Internal Vehicles' },
   ]
 
   return (
@@ -431,74 +556,68 @@ export default function Administration() {
               {/* Alerts Threshold Configurations Tab */}
               {settingsTab === 'alerts' && (
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Alerts Threshold Configurations</h2>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-3">Alerts Threshold</h2>
+                  <p className="text-xs text-gray-500 mb-4 max-w-3xl">
+                    Configure when alerts should trigger and who they should escalate to. Use lower thresholds for
+                    critical stages (e.g., JC not opened) and higher thresholds for less critical ones (e.g., idle time).
+                  </p>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Alert Type</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Threshold</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Severity</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Summary</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Configure</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
                         {alertThresholds.map((threshold) => (
                           <tr key={threshold.id} className="hover:bg-gray-50">
                             <td className="px-4 py-3 font-medium text-gray-900">{threshold.alertType}</td>
-                            <td className="px-4 py-3 text-gray-600">
-                              {editingThreshold === threshold.id ? (
-                                <input
-                                  type="number"
-                                  defaultValue={threshold.threshold}
-                                  className="px-2 py-1 border border-gray-300 rounded text-sm w-20 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                                  id={`threshold-${threshold.id}`}
-                                />
-                              ) : (
-                                threshold.threshold
-                              )}
-                            </td>
-                            <td className="px-4 py-3 text-gray-600">{threshold.unit}</td>
                             <td className="px-4 py-3">
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                threshold.severity === 'high' ? 'bg-gray-200 text-gray-800' :
-                                threshold.severity === 'medium' ? 'bg-gray-100 text-gray-700' :
-                                'bg-gray-50 text-gray-600'
-                              }`}>
+                              <span
+                                className={`px-2 py-1 rounded text-xs font-medium ${
+                                  threshold.severity === 'high'
+                                    ? 'bg-gray-200 text-gray-800'
+                                    : threshold.severity === 'medium'
+                                    ? 'bg-gray-100 text-gray-700'
+                                    : 'bg-gray-50 text-gray-600'
+                                }`}
+                              >
                                 {threshold.severity}
                               </span>
                             </td>
+                            <td className="px-4 py-3 text-xs text-gray-600">
+                              <div>
+                                <span className="font-medium">
+                                  Base: {threshold.threshold} {threshold.unit}
+                                </span>
+                              </div>
+                              <div className="mt-1">
+                                {threshold.escalationLevels && threshold.escalationLevels.length > 0 ? (
+                                  <span>
+                                    {threshold.escalationLevels.length} level(s):{' '}
+                                    {threshold.escalationLevels
+                                      .map((l) => `L${l.level} → ${l.role}`)
+                                      .join(', ')}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400">No escalation configured</span>
+                                )}
+                              </div>
+                            </td>
                             <td className="px-4 py-3">
-                              {editingThreshold === threshold.id ? (
-                                <div className="flex items-center space-x-2">
-                                  <button
-                                    onClick={() => {
-                                      const input = document.getElementById(`threshold-${threshold.id}`) as HTMLInputElement
-                                      handleSaveThreshold(threshold.id, parseInt(input?.value || '0'))
-                                    }}
-                                    className="p-1.5 text-green-600 hover:bg-green-50 rounded"
-                                    title="Save"
-                                  >
-                                    <FiSave className="w-4 h-4" />
-                                  </button>
-                                  <button
-                                    onClick={() => setEditingThreshold(null)}
-                                    className="p-1.5 text-gray-600 hover:bg-gray-100 rounded"
-                                    title="Cancel"
-                                  >
-                                    <FiX className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={() => setEditingThreshold(threshold.id)}
-                                  className="p-1.5 text-primary-600 hover:bg-primary-50 rounded"
-                                  title="Edit"
-                                >
-                                  <FiEdit className="w-4 h-4" />
-                                </button>
-                              )}
+                              <button
+                                onClick={() => {
+                                  setActiveAlertConfig(threshold)
+                                  setBaseThresholdInput(String(threshold.threshold))
+                                }}
+                                className="inline-flex items-center space-x-1 px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-xs"
+                              >
+                                <FiSettings className="w-3 h-3" />
+                                <span>Configure</span>
+                              </button>
                             </td>
                           </tr>
                         ))}
@@ -511,7 +630,11 @@ export default function Administration() {
               {/* Manpower Attendance Details Tab */}
               {settingsTab === 'manpower' && (
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Manpower Attendance Details</h2>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-2">Manpower Attendance Details</h2>
+                  <p className="text-xs text-gray-500 mb-4">
+                    Status is marked as <span className="font-semibold">Present</span> by default. Update to{' '}
+                    <span className="font-semibold">Absent</span> when a resource is not available.
+                  </p>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead className="bg-gray-50">
@@ -519,9 +642,9 @@ export default function Administration() {
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Check In</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Check Out</th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Edit</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Synced</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
@@ -530,13 +653,29 @@ export default function Administration() {
                             <td className="px-4 py-3 font-medium text-gray-900">{attendance.name}</td>
                             <td className="px-4 py-3 text-gray-600">{attendance.role}</td>
                             <td className="px-4 py-3 text-gray-600">{attendance.date}</td>
-                            <td className="px-4 py-3 text-gray-600">{attendance.checkIn}</td>
-                            <td className="px-4 py-3 text-gray-600">{attendance.checkOut}</td>
                             <td className="px-4 py-3">
                               <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(attendance.status)}`}>
                                 {attendance.status}
                               </span>
                             </td>
+                            <td className="px-4 py-3">
+                              <select
+                                value={attendance.status}
+                                onChange={(e) => {
+                                  const value = e.target.value as 'present' | 'absent'
+                                  setManpowerAttendance(prev =>
+                                    prev.map(m =>
+                                      m.id === attendance.id ? { ...m, status: value } : m
+                                    )
+                                  )
+                                }}
+                                className="px-2 py-1 border border-gray-300 rounded text-xs bg-white focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                              >
+                                <option value="present">Present</option>
+                                <option value="absent">Absent</option>
+                              </select>
+                            </td>
+                            <td className="px-4 py-3 text-gray-600 text-xs">{attendance.lastSynced}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -604,21 +743,20 @@ export default function Administration() {
           </div>
         )}
 
-        {/* Vehicle Rejection Tab */}
+        {/* Internal Vehicles Tab */}
         {activeTab === 'vehicle-rejection' && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Vehicle Rejection Management</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Internal Vehicles Management</h2>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reg No.</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer Name</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reason</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Feedback / Exception</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Images</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Submitted By</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Submitted At</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Verified By</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
@@ -627,8 +765,24 @@ export default function Administration() {
                   {vehicleRejections.map((rejection) => (
                     <tr key={rejection.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 font-medium text-gray-900">{rejection.regNo}</td>
-                      <td className="px-4 py-3 text-gray-600">{rejection.customerName}</td>
                       <td className="px-4 py-3 text-gray-600">{rejection.reason}</td>
+                      <td className="px-4 py-3 text-gray-600">
+                        <div className="flex items-center justify-between space-x-2">
+                          <span className="text-xs text-gray-700 truncate max-w-[180px]">
+                            {rejection.feedback || 'No feedback added'}
+                          </span>
+                          <button
+                            onClick={() => {
+                              setEditingFeedback(rejection)
+                              setFeedbackText(rejection.feedback || '')
+                            }}
+                            className="p-1.5 text-primary-600 hover:bg-primary-50 rounded"
+                            title="Edit feedback / reason"
+                          >
+                            <FiEdit className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
                       <td className="px-4 py-3">
                         {rejection.images && rejection.images.length > 0 ? (
                           <div className="flex items-center space-x-2">
@@ -657,15 +811,6 @@ export default function Administration() {
                       <td className="px-4 py-3 text-gray-600">{rejection.submittedBy}</td>
                       <td className="px-4 py-3 text-gray-600">
                         {new Date(rejection.submittedAt).toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          rejection.status === 'approved' ? 'bg-gray-100 text-gray-700' :
-                          rejection.status === 'rejected' ? 'bg-gray-200 text-gray-800' :
-                          'bg-gray-50 text-gray-600'
-                        }`}>
-                          {rejection.status}
-                        </span>
                       </td>
                       <td className="px-4 py-3 text-gray-600">
                         {rejection.verifiedBy || '-'}
@@ -702,9 +847,181 @@ export default function Administration() {
           </div>
         )}
 
+        {/* Alerts Threshold Configuration Modal */}
+        {activeAlertConfig && (() => {
+          const current = alertThresholds.find(a => a.id === activeAlertConfig.id)
+          if (!current) return null
+
+          return (
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Configure Alert - {current.alertType}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1 max-w-2xl">
+                      Tip: Use a shorter threshold and fewer escalation steps for critical alerts (like JC not opened),
+                      and slightly higher thresholds with more gradual escalation for less critical alerts (like idle time).
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setActiveAlertConfig(null)
+                      setBaseThresholdInput('')
+                    }}
+                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
+                  >
+                    <FiX className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Base configuration */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Base Threshold
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="number"
+                        value={baseThresholdInput}
+                        onChange={(e) => setBaseThresholdInput(e.target.value)}
+                        className="w-24 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                      />
+                      <span className="text-xs text-gray-600">{current.unit}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Severity
+                    </label>
+                    <span
+                      className={`inline-flex px-2 py-1 rounded text-xs font-medium ${
+                        current.severity === 'high'
+                          ? 'bg-gray-200 text-gray-800'
+                          : current.severity === 'medium'
+                          ? 'bg-gray-100 text-gray-700'
+                          : 'bg-gray-50 text-gray-600'
+                      }`}
+                    >
+                      {current.severity}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Suggestions
+                    </label>
+                    <p className="text-[11px] text-gray-500">
+                      High severity: 10–15 minutes. Medium: 30–60 minutes. Low: 60+ minutes.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Escalation levels */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-semibold text-gray-900">Escalation Levels</h4>
+                    <button
+                      onClick={() => handleAddEscalationLevel(current.id)}
+                      className="inline-flex items-center space-x-1 px-2 py-1 text-xs border border-dashed border-gray-300 rounded hover:bg-gray-50"
+                    >
+                      <FiPlus className="w-3 h-3" />
+                      <span>Add Level</span>
+                    </button>
+                  </div>
+                  {(current.escalationLevels || []).length === 0 ? (
+                    <p className="text-xs text-gray-400">
+                      No escalation configured yet. Add levels to notify different roles if the alert remains unresolved.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {(current.escalationLevels || []).map((level, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center space-x-2 bg-gray-50 border border-gray-200 rounded px-2 py-1.5"
+                        >
+                          <span className="text-xs text-gray-500 font-medium">Level {level.level}</span>
+                          <span className="text-[11px] text-gray-500">after</span>
+                          <input
+                            type="number"
+                            value={level.threshold}
+                            onChange={(e) =>
+                              handleUpdateEscalationThreshold(
+                                current.id,
+                                idx,
+                                parseInt(e.target.value || '0', 10)
+                              )
+                            }
+                            className="w-20 px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                          />
+                          <span className="text-xs text-gray-500">{current.unit}</span>
+                          <span className="text-[11px] text-gray-500">escalate to</span>
+                          <select
+                            value={level.role}
+                            onChange={(e) =>
+                              handleUpdateEscalationRole(current.id, idx, e.target.value)
+                            }
+                            className="px-2 py-1 border border-gray-300 rounded text-xs bg-white focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                          >
+                            {mockRolesForStation.map((role) => (
+                              <option key={role} value={role}>
+                                {role}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            onClick={() => handleRemoveEscalationLevel(current.id, idx)}
+                            className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                            title="Remove level"
+                          >
+                            <FiTrash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer actions */}
+                <div className="pt-4 border-t border-gray-200 flex items-center justify-between">
+                  <div className="text-[11px] text-gray-500 max-w-sm">
+                    Note: Base threshold defines when the first alert is raised. Escalation levels define who is notified
+                    if the condition continues beyond that time.
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={() => {
+                        const value = parseInt(baseThresholdInput || '0', 10)
+                        if (!isNaN(value)) {
+                          handleSaveThreshold(current.id, value)
+                        }
+                        setActiveAlertConfig(null)
+                        setBaseThresholdInput('')
+                      }}
+                      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveAlertConfig(null)
+                        setBaseThresholdInput('')
+                      }}
+                      className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
+
         {/* Image Viewer Modal */}
         {viewingImages && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Vehicle Images</h3>
@@ -727,6 +1044,59 @@ export default function Administration() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Internal Vehicle Feedback Modal */}
+        {editingFeedback && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Edit Feedback / Exception Reason</h3>
+                <button
+                  onClick={() => {
+                    setEditingFeedback(null)
+                    setFeedbackText('')
+                  }}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
+                >
+                  <FiX className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="space-y-3 mb-4">
+                <p className="text-sm text-gray-700">
+                  Vehicle: <span className="font-medium">{editingFeedback.regNo}</span>
+                </p>
+                <p className="text-xs text-gray-500">
+                  Add a brief note explaining why this internal vehicle is an exception (e.g., demo car, test drive,
+                  workshop use, etc.).
+                </p>
+                <textarea
+                  value={feedbackText}
+                  onChange={(e) => setFeedbackText(e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="Enter feedback / exception reason..."
+                />
+              </div>
+              <div className="flex items-center justify-end space-x-3 pt-2 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    setEditingFeedback(null)
+                    setFeedbackText('')
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveFeedback}
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium"
+                >
+                  Save
+                </button>
               </div>
             </div>
           </div>

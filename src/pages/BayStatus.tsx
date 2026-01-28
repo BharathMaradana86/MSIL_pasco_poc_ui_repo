@@ -279,6 +279,7 @@ const mockTechnicians: Technician[] = [
 ]
 
 export default function BayStatus() {
+  const [selectedVehicle, setSelectedVehicle] = useState<any>(null)
   const [bays, setBays] = useState<Bay[]>(mockBays)
   const [vehicles] = useState<Vehicle[]>(mockVehicles)
   const [technicians] = useState<Technician[]>(mockTechnicians)

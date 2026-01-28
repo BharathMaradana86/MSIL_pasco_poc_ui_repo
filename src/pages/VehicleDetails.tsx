@@ -19,7 +19,7 @@ interface VehicleTrackingStage {
   stage: string
   direction: 'In' | 'Out'
   timestamp: Date
-  images: string[]
+  image?: string
   location: string
 }
 
@@ -67,7 +67,7 @@ export default function VehicleDetails() {
       stage: 'Main Entry',
       direction: 'In',
       timestamp: new Date(Date.now() - 120 * 60000),
-      images: ['image1.jpg', 'image2.jpg'],
+      image: 'main-entry.jpg',
       location: 'Main Gate',
     },
     {
@@ -75,7 +75,7 @@ export default function VehicleDetails() {
       stage: 'Washing Entry',
       direction: 'In',
       timestamp: new Date(Date.now() - 110 * 60000),
-      images: ['image3.jpg'],
+      image: 'washing-entry.jpg',
       location: 'Washing Bay',
     },
     {
@@ -83,7 +83,7 @@ export default function VehicleDetails() {
       stage: 'Washing Exit',
       direction: 'Out',
       timestamp: new Date(Date.now() - 95 * 60000),
-      images: ['image4.jpg', 'image5.jpg'],
+      image: 'washing-exit.jpg',
       location: 'Washing Bay',
     },
     {
@@ -91,7 +91,7 @@ export default function VehicleDetails() {
       stage: 'Floor Entry',
       direction: 'In',
       timestamp: new Date(Date.now() - 90 * 60000),
-      images: ['image6.jpg'],
+      image: undefined,
       location: 'Service Floor',
     },
     {
@@ -99,7 +99,7 @@ export default function VehicleDetails() {
       stage: 'Bay Allocation',
       direction: 'In',
       timestamp: new Date(Date.now() - 85 * 60000),
-      images: ['image7.jpg', 'image8.jpg', 'image9.jpg'],
+      image: undefined,
       location: 'Bay 2',
     },
   ]
@@ -283,20 +283,17 @@ export default function VehicleDetails() {
                             </span>
                           </div>
                         </div>
-                        {stage.images.length > 0 && (
+                        {stage.image && (
                           <div className="mt-3 flex flex-wrap gap-2">
-                            {stage.images.map((img, idx) => (
-                              <div 
-                                key={idx} 
-                                className="relative w-24 h-24 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden hover:border-primary-300 cursor-pointer group"
-                              >
-                                <FiCamera className="w-6 h-6 text-gray-400 group-hover:text-primary-600" />
-                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity"></div>
-                                <span className="absolute bottom-1 left-1 right-1 text-[8px] text-gray-500 bg-white bg-opacity-80 px-1 py-0.5 rounded truncate">
-                                  {img}
-                                </span>
-                              </div>
-                            ))}
+                            <div 
+                              className="relative w-24 h-24 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden hover:border-primary-300 cursor-pointer group"
+                            >
+                              <FiCamera className="w-6 h-6 text-gray-400 group-hover:text-primary-600" />
+                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity"></div>
+                              <span className="absolute bottom-1 left-1 right-1 text-[8px] text-gray-500 bg-white bg-opacity-80 px-1 py-0.5 rounded truncate">
+                                {stage.image}
+                              </span>
+                            </div>
                           </div>
                         )}
                       </div>
